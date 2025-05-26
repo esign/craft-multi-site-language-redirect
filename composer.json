@@ -1,0 +1,47 @@
+{
+  "name": "esign/craft-multi-site-language-redirect",
+  "description": "automatically redirects users to the appropriate site in a Craft CMS multisite setup based on their browser language or previously selected language.",
+  "type": "craft-plugin",
+  "license": "mit",
+  "support": {
+    "email": "support.web@dynamate.be",
+    "issues": "https://github.com/esign/craft-multi-site-language-redirect/issues?state=open",
+    "source": "https://github.com/esign/craft-multi-site-language-redirect",
+    "docs": "https://github.com/esign/craft-multi-site-language-redirect",
+    "rss": "https://github.com/esign/craft-multi-site-language-redirect/releases.atom"
+  },
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.6.0"
+  },
+  "require-dev": {
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "esign\\craftmultisitelanguageredirect\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "multi-site-language-redirect",
+    "name": "MultiSite Language Redirect",
+    "developer": "dieter.vanhove@outlook.com",
+    "documentationUrl": "https://github.com/esign/craft-multi-site-language-redirect"
+  },
+  "scripts": {
+    "check-cs": "ecs check --ansi",
+    "fix-cs": "ecs check --ansi --fix",
+    "phpstan": "phpstan --memory-limit=1G"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}

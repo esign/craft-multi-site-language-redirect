@@ -1,0 +1,50 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.lightswitchField({
+    first: true,
+    label: "Enable Localization"|t('multi-site-language-redirect'),
+    instructions: "Enable automatic language detection and redirection"|t('multi-site-language-redirect'),
+    name: 'enabled',
+    on: settings.enabled,
+    errors: settings.getErrors('enabled'),
+}) }}
+
+{{ forms.textField({
+    label: "Cookie Name"|t('multi-site-language-redirect'),
+    instructions: "The name of the cookie used to store the language preference"|t('multi-site-language-redirect'),
+    name: 'cookieName',
+    value: settings.cookieName,
+    errors: settings.getErrors('cookieName'),
+    required: true,
+}) }}
+
+{{ forms.checkboxSelectField({
+    label: "Ignored HTTP Methods"|t('multi-site-language-redirect'),
+    instructions: "HTTP methods that should not trigger a redirect"|t('multi-site-language-redirect'),
+    name: 'httpMethodsIgnored',
+    options: [
+        { label: 'POST', value: 'POST' },
+        { label: 'PUT', value: 'PUT' },
+        { label: 'PATCH', value: 'PATCH' },
+        { label: 'DELETE', value: 'DELETE' },
+    ],
+    values: settings.httpMethodsIgnored,
+    errors: settings.getErrors('httpMethodsIgnored'),
+}) }}
+
+<h2>Primary Sites</h2>
+{% set siteGroups = craft.app.sites.getAllGroups() %}
+{% for group in siteGroups %}
+    {% set sites = craft.app.sites.getSitesByGroupId(group.id)|filter(site => site.enabled) %}
+    {{ forms.selectField({
+        label: "Primary Site for " ~ group.name|t('multi-site-language-redirect'),
+        instructions: "Select the primary site for this site group. If no selection is made, the first site in the group will be used as default."|t('multi-site-language-redirect'),
+        name: 'primarySites[' ~ group.id ~ ']',
+        options: sites|map(site => {
+            label: site.name,
+            value: site.id
+        }),
+        value: settings.primarySites[group.id] ?? sites[0].id,
+        errors: settings.getErrors('primarySites'),
+    }) }}
+{% endfor %}
