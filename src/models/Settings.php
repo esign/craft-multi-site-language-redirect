@@ -10,6 +10,7 @@ use craft\base\Model;
  * @property array $httpMethodsIgnored
  * @property string $cookieName
  * @property array $primarySites
+ * @property array $enabledSites
  */
 class Settings extends Model
 {
@@ -25,6 +26,9 @@ class Settings extends Model
     /** @var array */
     public array $primarySites = [];
 
+    /** @var array */
+    public array $enabledSites = [];
+
     public function rules(): array
     {
         return [
@@ -35,6 +39,7 @@ class Settings extends Model
             [['cookieName'], 'string', 'min' => 1],
             [['cookieName'], 'match', 'pattern' => '/^[a-zA-Z][a-zA-Z0-9_]*$/', 'message' => 'Cookie name must start with a letter and can only contain letters, numbers, and underscores'],
             [['primarySites'], 'each', 'rule' => ['integer']],
+            [['enabledSites'], 'each', 'rule' => ['integer']],
         ];
     }
 
@@ -45,6 +50,7 @@ class Settings extends Model
             'httpMethodsIgnored' => Craft::t('multi-site-language-redirect', 'Ignored HTTP Methods'),
             'cookieName' => Craft::t('multi-site-language-redirect', 'Cookie Name'),
             'primarySites' => Craft::t('multi-site-language-redirect', 'Primary Sites'),
+            'enabledSites' => Craft::t('multi-site-language-redirect', 'Enabled Sites for Redirection'),
         ];
     }
 }

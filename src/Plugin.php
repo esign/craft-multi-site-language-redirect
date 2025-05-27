@@ -37,20 +37,16 @@ class Plugin extends BasePlugin
     public function init(): void
     {
         parent::init();
+        
+        // Early return if plugin is disabled
         if (!$this->getSettings()->enabled) {
             return;
         }
 
+        // Only attach event handlers for site requests
         if (Craft::$app->getRequest()->getIsSiteRequest()) {
-            // if route is robots.txt don't check cookie
-            if (Craft::$app->getRequest()->getUrl() === '/robots.txt') {
-                Plugin::getInstance()->localizationService->setSite(false);
-            } else {
-                Plugin::getInstance()->localizationService->setSite();
-            }
+            $this->attachEventHandlers();
         }
-
-        $this->attachEventHandlers();
     }
 
     /**
@@ -70,20 +66,19 @@ class Plugin extends BasePlugin
      */
     public function handleRequest(Event $event): void
     {
-        if (!Craft::$app->getRequest()->isSiteRequest) {
-            return;
-        }
-
-        if (Craft::$app->getRequest()->getUrl() === '/robots.txt') {
+        $request = Craft::$app->getRequest();
+        
+        // Early returns for non-site requests and specific paths
+        if (!$request->isSiteRequest || $request->getUrl() === '/robots.txt') {
             return;
         }
 
         // Skip if request method is in the ignored methods list
-        if (in_array(Craft::$app->getRequest()->getMethod(), $this->getSettings()->httpMethodsIgnored)) {
+        if (in_array($request->getMethod(), $this->getSettings()->httpMethodsIgnored)) {
             return;
         }
 
-        $localizationService = Plugin::getInstance()->localizationService;
+        $localizationService = $this->localizationService;
 
         // Skip if already a translated route
         if ($localizationService->isTranslatedRoute()) {
@@ -91,7 +86,7 @@ class Plugin extends BasePlugin
             return;
         }
 
-        $language = Craft::$app->getRequest()->getSegment(1);
+        $language = $request->getSegment(1);
         
         // Skip if language is valid but not supported
         if ($localizationService->isValidLanguageCode($language)) {
@@ -114,20 +109,19 @@ class Plugin extends BasePlugin
      */
     private function redirectToPreferredLanguage(): void
     {
-        $localizationService = Plugin::getInstance()->localizationService;
+        $localizationService = $this->localizationService;
         $preferredLanguage = $localizationService->getPreferredLanguage();
         $sites = $localizationService->getSitesInCurrentGroup();
 
         // Find the site matching the preferred language
-        $targetSite = current(array_filter($sites, function($site) use ($preferredLanguage) {
-            return $site->language === $preferredLanguage;
-        }));
-
-        if ($targetSite) {
-            // Set the language cookie before redirecting
-            $localizationService->setLanguageCookie($preferredLanguage);
-            Craft::$app->getResponse()->redirect($targetSite->baseUrl, 302);
-            Craft::$app->end();
+        foreach ($sites as $site) {
+            if ($site->language === $preferredLanguage) {
+                // Set the language cookie before redirecting
+                $localizationService->setLanguageCookie($preferredLanguage);
+                Craft::$app->getResponse()->redirect($site->baseUrl, 302);
+                Craft::$app->end();
+                return;
+            }
         }
     }
 

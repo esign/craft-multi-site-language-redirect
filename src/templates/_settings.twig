@@ -48,3 +48,20 @@
         errors: settings.getErrors('primarySites'),
     }) }}
 {% endfor %}
+
+<h2>Enabled Sites for Redirection</h2>
+{% for group in siteGroups %}
+    {% set sites = craft.app.sites.getSitesByGroupId(group.id)|filter(site => site.enabled) %}
+    <h3>{{ group.name }}</h3>
+    {{ forms.checkboxSelectField({
+        label: "Select sites that should be available for redirection"|t('multi-site-language-redirect'),
+        instructions: "Only selected sites will be used for language redirection. Sites that are not selected will still be accessible in the control panel but won't be used for automatic redirection."|t('multi-site-language-redirect'),
+        name: 'enabledSites',
+        options: sites|map(site => {
+            label: site.name,
+            value: site.id
+        }),
+        values: settings.enabledSites,
+        errors: settings.getErrors('enabledSites'),
+    }) }}
+{% endfor %}
