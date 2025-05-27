@@ -90,8 +90,9 @@ class LocalizationService extends Component
     private function getEnabledSites(): array
     {
         if ($this->_enabledSites === null) {
-            $this->_enabledSites = Plugin::getInstance()->getSettings()->enabledSites;
+            $this->_enabledSites = Plugin::getInstance()->getSettings()->enabledSitesByGroupId[Craft::$app->getSites()->getCurrentSite()->groupId];
         }
+
         return $this->_enabledSites;
     }
 

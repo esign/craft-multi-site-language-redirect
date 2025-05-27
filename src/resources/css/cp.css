@@ -1,0 +1,62 @@
+/* Multi-Site Language Redirect Plugin Settings Styles */
+
+.multi-site-language-redirect-settings h2 {
+    margin-top: 2em;
+}
+
+.multi-site-language-redirect-settings .info-box {
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #0d78f2;
+}
+
+.multi-site-language-redirect-settings .info-box p {
+    margin: 0 0 0.5em 0;
+}
+
+.multi-site-language-redirect-settings .info-box p:last-child {
+    margin-bottom: 0;
+}
+
+.multi-site-language-redirect-settings .info-box p.title {
+    font-weight: 600;
+}
+
+.multi-site-language-redirect-settings .info-box p.description {
+    color: #596673;
+}
+
+.multi-site-language-redirect-settings .site-groups {
+    /* Container for site groups */
+}
+
+.multi-site-language-redirect-settings .site-group-card {
+    border: 1px solid #e3e5e8;
+    border-radius: 6px;
+    padding: 1.5em;
+    margin-bottom: 2em;
+    background: #fafbfc;
+}
+
+.multi-site-language-redirect-settings .site-group-card h3 {
+    margin-top: 0;
+}
+
+.multi-site-language-redirect-settings .site-group-card .flex {
+    display: flex;
+    align-items: flex-start;
+    gap: 2em;
+    flex-wrap: wrap;
+}
+
+.multi-site-language-redirect-settings .site-group-card .flex > div:first-child {
+    flex: 1;
+    min-width: 220px;
+}
+
+.multi-site-language-redirect-settings .site-group-card .flex > div:last-child {
+    flex: 2;
+    min-width: 220px;
+} 

@@ -1,63 +1,89 @@
 {% import "_includes/forms" as forms %}
 
-{{ forms.lightswitchField({
-    first: true,
-    label: "Enable Localization"|t('multi-site-language-redirect'),
-    instructions: "Enable automatic language detection and redirection"|t('multi-site-language-redirect'),
-    name: 'enabled',
-    on: settings.enabled,
-    errors: settings.getErrors('enabled'),
-}) }}
 
-{{ forms.textField({
-    label: "Cookie Name"|t('multi-site-language-redirect'),
-    instructions: "The name of the cookie used to store the language preference"|t('multi-site-language-redirect'),
-    name: 'cookieName',
-    value: settings.cookieName,
-    errors: settings.getErrors('cookieName'),
-    required: true,
-}) }}
+<div class="multi-site-language-redirect-settings">
+    <div class="field">
+        {{ forms.lightswitchField({
+            first: true,
+            label: "Enable Localization"|t('multi-site-language-redirect'),
+            instructions: "Enable automatic language detection and redirection"|t('multi-site-language-redirect'),
+            name: 'enabled',
+            on: settings.enabled,
+            errors: settings.getErrors('enabled'),
+        }) }}
+    </div>
 
-{{ forms.checkboxSelectField({
-    label: "Ignored HTTP Methods"|t('multi-site-language-redirect'),
-    instructions: "HTTP methods that should not trigger a redirect"|t('multi-site-language-redirect'),
-    name: 'httpMethodsIgnored',
-    options: [
-        { label: 'POST', value: 'POST' },
-        { label: 'PUT', value: 'PUT' },
-        { label: 'PATCH', value: 'PATCH' },
-        { label: 'DELETE', value: 'DELETE' },
-    ],
-    values: settings.httpMethodsIgnored,
-    errors: settings.getErrors('httpMethodsIgnored'),
-}) }}
+    <div class="field">
+        {{ forms.textField({
+            label: "Cookie Name"|t('multi-site-language-redirect'),
+            instructions: "The name of the cookie used to store the language preference"|t('multi-site-language-redirect'),
+            name: 'cookieName',
+            value: settings.cookieName,
+            errors: settings.getErrors('cookieName'),
+            required: true,
+        }) }}
+    </div>
 
-<h2>Primary Sites</h2>
-{% set siteGroups = craft.app.sites.getAllGroups() %}
-{% for group in siteGroups %}
-    {% set sites = craft.app.sites.getSitesByGroupId(group.id)|filter(site => site.enabled) %}
-    {{ forms.selectField({
-        label: "Primary Site for " ~ group.name|t('multi-site-language-redirect'),
-        instructions: "Select the primary site for this site group. If no selection is made, the first site in the group will be used as default."|t('multi-site-language-redirect'),
-        name: 'primarySites[' ~ group.id ~ ']',
-        options: sites|map(site => {
-            label: site.name,
-            value: site.id
-        }),
-        value: settings.primarySites[group.id] ?? sites[0].id,
-        errors: settings.getErrors('primarySites'),
-    }) }}
+    <div class="field">
+        {{ forms.checkboxSelectField({
+            label: "Ignored HTTP Methods"|t('multi-site-language-redirect'),
+            instructions: "HTTP methods that should not trigger a redirect"|t('multi-site-language-redirect'),
+            name: 'httpMethodsIgnored',
+            options: [
+                { label: 'POST', value: 'POST' },
+                { label: 'PUT', value: 'PUT' },
+                { label: 'PATCH', value: 'PATCH' },
+                { label: 'DELETE', value: 'DELETE' },
+            ],
+            values: settings.httpMethodsIgnored,
+            errors: settings.getErrors('httpMethodsIgnored'),
+        }) }}
+    </div>
 
-    <h3>Enabled Sites for Redirection</h3>
-    {{ forms.checkboxSelectField({
-        label: "Select sites that should be available for redirection"|t('multi-site-language-redirect'),
-        instructions: "Only selected sites will be used for language redirection. Sites that are not selected will still be accessible in the control panel but won't be used for automatic redirection."|t('multi-site-language-redirect'),
-        name: 'enabledSites',
-        options: sites|map(site => {
-            label: site.name,
-            value: site.id
-        }),
-        values: settings.enabledSites,
-        errors: settings.getErrors('enabledSites'),
-    }) }}
-{% endfor %}
+    <hr>
+
+    <h2>Primary Sites & Redirection</h2>
+    <div class="info-box">
+        <p class="title">Primary Site:</p>
+        <p class="description">{{ "Select the primary site for each group. If no selection is made, the first site in the group will be used as default."|t('multi-site-language-redirect') }}</p>
+        
+        <p class="title">Enabled Sites for Redirection:</p>
+        <p class="description">{{ "Only selected sites will be used for language redirection. Sites that are not selected will still be accessible in the control panel but won't be used for automatic redirection."|t('multi-site-language-redirect') }}</p>
+    </div>
+
+    {% set siteGroups = craft.app.sites.getAllGroups() %}
+    <div class="site-groups">
+        {% for group in siteGroups %}
+            {% set sites = craft.app.sites.getSitesByGroupId(group.id)|filter(site => site.enabled) %}
+            <div class="site-group-card">
+                <h3>{{ group.name|t('multi-site-language-redirect') }}</h3>
+                <div class="flex">
+                    <div>
+                        {{ forms.selectField({
+                            label: "Primary Site",
+                            name: 'primarySites[' ~ group.id ~ ']',
+                            options: sites|map(site => {
+                                label: site.name,
+                                value: site.id
+                            }),
+                            value: settings.primarySites[group.id] ?? sites[0].id,
+                            errors: settings.getErrors('primarySites'),
+                        }) }}
+                    </div>
+                    <div>
+                        {{ forms.checkboxSelectField({
+                            label: "Enabled Sites for Redirection",
+                            name: 'enabledSitesByGroupId[' ~ group.id ~ ']',
+                            options: sites|map(site => {
+                                label: site.name,
+                                value: site.id
+                            }),
+                            values: settings.enabledSitesByGroupId[group.id] ?? false,
+                            errors: settings.getErrors('enabledSitesByGroupId'),
+                        }) }}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
 use craft\web\Application;
+use esign\craftmultisitelanguageredirect\assets\SettingsAsset;
 use esign\craftmultisitelanguageredirect\models\Settings;
 use esign\craftmultisitelanguageredirect\services\LocalizationService;
 use yii\base\Event;
@@ -36,7 +37,7 @@ class Plugin extends BasePlugin
 
     public function init(): void
     {
-        parent::init();
+        parent::init();    
         if (!$this->getSettings()->enabled) {
             return;
         }
@@ -138,6 +139,9 @@ class Plugin extends BasePlugin
 
     protected function settingsHtml(): ?string
     {
+        // Register the asset bundle for the settings page
+        Craft::$app->getView()->registerAssetBundle(SettingsAsset::class);
+        
         return Craft::$app->view->renderTemplate('multi-site-language-redirect/_settings.twig', [
             'plugin' => $this,
             'settings' => $this->getSettings(),

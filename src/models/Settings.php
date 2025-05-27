@@ -26,16 +26,22 @@ class Settings extends Model
     public array $primarySites = [];
 
     /** @var array */
-    public array $enabledSites = [];
+    public ?array $enabledSitesByGroupId = null;
 
     public function init(): void
     {
         parent::init();
-        
-        // If enabledSites is empty, enable all sites by default
-        if (empty($this->enabledSites)) {
+        // If enabledSitesByGroupId is null, enable all sites by default
+        if (is_null($this->enabledSitesByGroupId)) {
             $sites = Craft::$app->getSites()->getAllSites();
-            $this->enabledSites = array_map(fn($site) => $site->id, $sites);
+            $this->enabledSitesByGroupId = [];
+            
+            foreach ($sites as $site) {
+                if (!isset($this->enabledSitesByGroupId[$site->groupId])) {
+                    $this->enabledSitesByGroupId[$site->groupId] = [];
+                }
+                $this->enabledSitesByGroupId[$site->groupId][] = $site->id;
+            }
         }
     }
 
