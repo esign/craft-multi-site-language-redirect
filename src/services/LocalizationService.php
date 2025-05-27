@@ -8,31 +8,19 @@ use craft\helpers\StringHelper;
 use craft\models\Site;
 use craft\validators\LanguageValidator;
 use esign\craftmultisitelanguageredirect\Plugin;
-use yii\web\Cookie;
 
 class LocalizationService extends Component
 {
-    private ?array $_sitesInCurrentGroup = null;
-    private ?array $_supportedLanguages = null;
-    private ?array $_enabledSites = null;
-
     /**
      * Checks if the current URL is already a translated route for the current site
      */
     public function isTranslatedRoute(): bool
     {
-        static $isTranslatedRoute = null;
-        
-        if ($isTranslatedRoute !== null) {
-            return $isTranslatedRoute;
-        }
-
         $currentSite = Craft::$app->getSites()->getCurrentSite();
         $currentUrl = trim(Craft::$app->getRequest()->absoluteUrl, '/');
         $siteBaseUrl = trim($currentSite->baseUrl, '/');
-        $isTranslatedRoute = StringHelper::startsWith($currentUrl, $siteBaseUrl);
-
-        return $isTranslatedRoute;
+        
+        return StringHelper::startsWith($currentUrl, $siteBaseUrl);
     }
 
     /**
@@ -79,38 +67,10 @@ class LocalizationService extends Component
      */
     private function getSitesMatchingHost(string $hostInfo): array
     {
-        static $matchingSitesCache = [];
-        
-        if (isset($matchingSitesCache[$hostInfo])) {
-            return $matchingSitesCache[$hostInfo];
-        }
-
-        $settings = Plugin::getInstance()->getSettings();
-        $enabledSites = $this->getEnabledSites();
-
-        $matchingSitesCache[$hostInfo] = array_values(array_filter(
+        return array_values(array_filter(
             Craft::$app->getSites()->allSites,
-            function($site) use ($hostInfo, $enabledSites) {
-                // Only include sites that are enabled for redirection
-                if (!empty($enabledSites) && !in_array($site->id, $enabledSites)) {
-                    return false;
-                }
-                return $this->siteMatchesHost($site, $hostInfo);
-            }
+            fn($site) => $this->siteMatchesHost($site, $hostInfo)
         ));
-
-        return $matchingSitesCache[$hostInfo];
-    }
-
-    /**
-     * Gets the enabled sites from settings
-     */
-    private function getEnabledSites(): array
-    {
-        if ($this->_enabledSites === null) {
-            $this->_enabledSites = Plugin::getInstance()->getSettings()->enabledSites;
-        }
-        return $this->_enabledSites;
     }
 
     /**
@@ -140,24 +100,8 @@ class LocalizationService extends Component
      */
     public function getSitesInCurrentGroup(): array
     {
-        if ($this->_sitesInCurrentGroup !== null) {
-            return $this->_sitesInCurrentGroup;
-        }
-
         $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
-        $enabledSites = $this->getEnabledSites();
-
-        $sites = Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
-        
-        // Filter sites based on enabledSites setting
-        if (!empty($enabledSites)) {
-            $sites = array_filter($sites, function($site) use ($enabledSites) {
-                return in_array($site->id, $enabledSites);
-            });
-        }
-
-        $this->_sitesInCurrentGroup = array_values($sites);
-        return $this->_sitesInCurrentGroup;
+        return Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
     }
 
     /**
@@ -165,16 +109,10 @@ class LocalizationService extends Component
      */
     public function getSupportedLanguages(): array
     {
-        if ($this->_supportedLanguages !== null) {
-            return $this->_supportedLanguages;
-        }
-
-        $this->_supportedLanguages = array_map(
+        return array_map(
             fn($site) => $site->language,
             $this->getSitesInCurrentGroup()
         );
-
-        return $this->_supportedLanguages;
     }
 
     /**
@@ -211,11 +149,8 @@ class LocalizationService extends Component
             return false;
         }
 
-        static $validator = null;
-        if ($validator === null) {
-            $validator = new LanguageValidator();
-            $validator->onlySiteLanguages = false;
-        }
+        $validator = new LanguageValidator();
+        $validator->onlySiteLanguages = false;
 
         return $validator->validate($language);
     }
@@ -225,10 +160,7 @@ class LocalizationService extends Component
      */
     private function getLanguageFromCookie(): ?string
     {
-        static $cookieName = null;
-        if ($cookieName === null) {
-            $cookieName = Plugin::getInstance()->getSettings()->cookieName;
-        }
+        $cookieName = Plugin::getInstance()->getSettings()->cookieName;
         return Craft::$app->getRequest()->getCookies()->getValue($cookieName);
     }
 
@@ -237,19 +169,15 @@ class LocalizationService extends Component
      */
     public function setLanguageCookie(string $language): void
     {
-        static $cookieName = null;
-        if ($cookieName === null) {
-            $cookieName = Plugin::getInstance()->getSettings()->cookieName;
-        }
-
-        $cookie = new Cookie([
+        $cookieName = Plugin::getInstance()->getSettings()->cookieName;
+        $cookie = new \yii\web\Cookie([
             'name' => $cookieName,
             'value' => $language,
             'expire' => time() + 31536000, // 1 year
             'path' => '/',
             'secure' => Craft::$app->getRequest()->getIsSecureConnection(),
             'httpOnly' => true,
-            'sameSite' => Cookie::SAME_SITE_LAX,
+            'sameSite' => \yii\web\Cookie::SAME_SITE_LAX,
         ]);
 
         Craft::$app->getResponse()->getCookies()->add($cookie);
