@@ -15,8 +15,6 @@
  * you do for 'general.php'
  */
 
-use craft\helpers\App;
-
 return [
     '*' => [
         // With this setting you can enable or disable the plugin.
