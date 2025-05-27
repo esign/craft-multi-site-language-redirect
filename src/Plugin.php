@@ -37,7 +37,8 @@ class Plugin extends BasePlugin
 
     public function init(): void
     {
-        parent::init();    
+        parent::init();
+
         if (!$this->getSettings()->enabled) {
             return;
         }
@@ -45,9 +46,9 @@ class Plugin extends BasePlugin
         if (Craft::$app->getRequest()->getIsSiteRequest()) {
             // if route is robots.txt don't check cookie
             if (Craft::$app->getRequest()->getUrl() === '/robots.txt') {
-                Plugin::getInstance()->localizationService->setSite(false);
+                $this->localizationService->setSite(false);
             } else {
-                Plugin::getInstance()->localizationService->setSite();
+                $this->localizationService->setSite();
             }
         }
 
@@ -62,74 +63,61 @@ class Plugin extends BasePlugin
         Event::on(
             Application::class,
             Application::EVENT_BEFORE_REQUEST,
-            [$this, 'handleRequest']
-        );
-    }
-
-    /**
-     * Handle the incoming request and perform necessary redirects
-     */
-    public function handleRequest(Event $event): void
-    {
-        if (!Craft::$app->getRequest()->isSiteRequest) {
-            return;
-        }
-
-        if (Craft::$app->getRequest()->getUrl() === '/robots.txt') {
-            return;
-        }
-
-        // Skip if request method is in the ignored methods list
-        if (in_array(Craft::$app->getRequest()->getMethod(), $this->getSettings()->httpMethodsIgnored)) {
-            return;
-        }
-
-        $localizationService = Plugin::getInstance()->localizationService;
-
-        // Skip if already a translated route
-        if ($localizationService->isTranslatedRoute()) {
-            $localizationService->setLanguageCookie(Craft::$app->getSites()->getCurrentSite()->language);
-            return;
-        }
-
-        $language = Craft::$app->getRequest()->getSegment(1);
+            function(Event $event) {
+                $request = Craft::$app->getRequest();
+                if (!$request->isSiteRequest) {
+                    return;
+                }
         
-        // Skip if language is valid but not supported
-        if ($localizationService->isValidLanguageCode($language)) {
-            return;
-        }
-
-        // Skip if language is supported
-        if (in_array($language, $localizationService->getSupportedLanguages())) {
-            // Set the language cookie when a supported language is selected
-            $localizationService->setLanguageCookie($language);
-            return;
-        }
-
-        // Redirect to the preferred language site
-        $this->redirectToPreferredLanguage();
-    }
-
-    /**
-     * Redirect to the site with the preferred language
-     */
-    private function redirectToPreferredLanguage(): void
-    {
-        $localizationService = Plugin::getInstance()->localizationService;
-        $preferredLanguage = $localizationService->getPreferredLanguage();
-        $sites = $localizationService->getSitesInCurrentGroup();
-
-        // Find the site matching the preferred language
-        $targetSite = current(array_filter($sites, function($site) use ($preferredLanguage) {
-            return $site->language === $preferredLanguage;
-        }));
-
-        if ($targetSite) {
-            // Set the language cookie before redirecting
-            $localizationService->setLanguageCookie($preferredLanguage);
-            Craft::$app->getResponse()->redirect($targetSite->baseUrl, 302);
-            Craft::$app->end();
-        }
+                if ($request->getUrl() === '/robots.txt') {
+                    return;
+                }
+        
+                // Skip if request method is in the ignored methods list
+                if (in_array($request->getMethod(), $this->getSettings()->httpMethodsIgnored)) {
+                    return;
+                }
+        
+                $localizationService = $this->localizationService;
+        
+                // Skip if already a translated route
+                if ($localizationService->isTranslatedRoute()) {
+                    $localizationService->setLanguageCookie(Craft::$app->getSites()->getCurrentSite()->language);
+                    return;
+                }
+        
+                $language = $request->getSegment(1);
+                
+                // Skip if language is valid but not supported
+                if ($localizationService->isValidLanguageCode($language)) {
+                    return;
+                }
+        
+                // Skip if language is supported
+                if (in_array($language, $localizationService->getSupportedLanguages())) {
+                    // Set the language cookie when a supported language is selected
+                    $localizationService->setLanguageCookie($language);
+                    return;
+                }
+        
+                // Redirect to the preferred language site
+                $localizationService = $this->localizationService;
+                $preferredLanguage = $localizationService->getPreferredLanguage();
+                $sites = $localizationService->getEnabledSites();
+        
+                // Find the site matching the preferred language
+                $targetSite = current(array_filter($sites, function($site) use ($preferredLanguage) {
+                    return $site->language === $preferredLanguage;
+                }));
+        
+                if ($targetSite) {
+                    // Set the language cookie before redirecting
+                    $localizationService->setLanguageCookie($preferredLanguage);
+                    Craft::$app->getResponse()->redirect($targetSite->baseUrl . Craft::$app->getRequest()->pathInfo, 302);
+                    Craft::$app->end();
+                }
+            }
+        );
     }
 
     protected function createSettingsModel(): ?Model

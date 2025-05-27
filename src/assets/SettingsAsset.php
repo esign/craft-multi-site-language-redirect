@@ -21,4 +21,4 @@ class SettingsAsset extends AssetBundle
 
         parent::init();
     }
-} 
+}

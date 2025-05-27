@@ -4,6 +4,7 @@ namespace esign\craftmultisitelanguageredirect\services;
 
 use Craft;
 use craft\base\Component;
+use craft\helpers\ArrayHelper;
 use craft\helpers\StringHelper;
 use craft\models\Site;
 use craft\validators\LanguageValidator;
@@ -69,14 +70,23 @@ class LocalizationService extends Component
      */
     private function getSitesMatchingHost(string $hostInfo): array
     {
-        $enabledSites = $this->getEnabledSites();
-
+        $disabledSitesByGroupId = Plugin::getInstance()->getSettings()->disabledSitesByGroupId;
+        $disabledSitesIds = [];
+        
+        if ($disabledSitesByGroupId) {
+            // Flatten the multidimensional array to get all disabled site IDs
+            foreach ($disabledSitesByGroupId as $groupId => $siteIds) {
+                if (is_array($siteIds)) {
+                    $disabledSitesIds = array_merge($disabledSitesIds, $siteIds);
+                }
+            }
+        }
 
         return array_values(array_filter(
             Craft::$app->getSites()->allSites,
-            function($site) use ($hostInfo, $enabledSites) {
-                // Only include sites that are enabled for redirection
-                if (!empty($enabledSites) && !in_array($site->id, $enabledSites)) {
+            function($site) use ($hostInfo, $disabledSitesIds) {
+                // Only include sites that are enabled for redirection (not in disabled list)
+                if (!empty($disabledSitesIds) && in_array($site->id, $disabledSitesIds)) {
                     return false;
                 }
                 return $this->siteMatchesHost($site, $hostInfo);
@@ -87,10 +97,18 @@ class LocalizationService extends Component
     /**
      * Gets the enabled sites from settings
      */
-    private function getEnabledSites(): array
+    public function getEnabledSites(): array
     {
         if ($this->_enabledSites === null) {
-            $this->_enabledSites = Plugin::getInstance()->getSettings()->enabledSitesByGroupId[Craft::$app->getSites()->getCurrentSite()->groupId];
+            $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
+            $disabledSites = Plugin::getInstance()->getSettings()->disabledSitesByGroupId[$currentGroupId];
+            $sites = Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
+
+            if (empty($disabledSites)) {
+                $this->_enabledSites = $sites;
+            } else {
+                $this->_enabledSites = array_values(array_filter($sites, fn($site) => !in_array($site->id, $disabledSites)));
+            }
         }
 
         return $this->_enabledSites;
@@ -119,26 +137,13 @@ class LocalizationService extends Component
     }
 
     /**
-     * Gets all sites in the current site's group
-     */
-    public function getSitesInCurrentGroup(): array
-    {
-        $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
-        $enabledSites = $this->getEnabledSites();
-
-        $sites = Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
-
-        return array_values(array_filter($sites, fn($site) => in_array($site->id, $enabledSites)));
-    }
-
-    /**
      * Gets all supported languages from sites in the current group
      */
     public function getSupportedLanguages(): array
     {
         return array_map(
             fn($site) => $site->language,
-            $this->getSitesInCurrentGroup()
+            $this->getEnabledSites()
         );
     }
 

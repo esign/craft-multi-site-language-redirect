@@ -47,8 +47,8 @@
         <p class="title">Primary Site:</p>
         <p class="description">{{ "Select the primary site for each group. If no selection is made, the first site in the group will be used as default."|t('multi-site-language-redirect') }}</p>
         
-        <p class="title">Enabled Sites for Redirection:</p>
-        <p class="description">{{ "Only selected sites will be used for language redirection. Sites that are not selected will still be accessible in the control panel but won't be used for automatic redirection."|t('multi-site-language-redirect') }}</p>
+        <p class="title">Disabled Sites for Redirection:</p>
+        <p class="description">{{ "Selected sites will be disabled for language redirection. Sites that are not selected will be available for automatic redirection. All sites remain accessible in the control panel."|t('multi-site-language-redirect') }}</p>
     </div>
 
     {% set siteGroups = craft.app.sites.getAllGroups() %}
@@ -72,14 +72,14 @@
                     </div>
                     <div>
                         {{ forms.checkboxSelectField({
-                            label: "Enabled Sites for Redirection",
-                            name: 'enabledSitesByGroupId[' ~ group.id ~ ']',
+                            label: "Disabled Sites for Redirection",
+                            name: 'disabledSitesByGroupId[' ~ group.id ~ ']',
                             options: sites|map(site => {
                                 label: site.name,
                                 value: site.id
                             }),
-                            values: settings.enabledSitesByGroupId[group.id] ?? false,
-                            errors: settings.getErrors('enabledSitesByGroupId'),
+                            values: settings.disabledSitesByGroupId[group.id] ?? false,
+                            errors: settings.getErrors('disabledSitesByGroupId'),
                         }) }}
                     </div>
                 </div>
