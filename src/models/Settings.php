@@ -25,6 +25,20 @@ class Settings extends Model
     /** @var array */
     public array $primarySites = [];
 
+    /** @var array */
+    public array $enabledSites = [];
+
+    public function init(): void
+    {
+        parent::init();
+        
+        // If enabledSites is empty, enable all sites by default
+        if (empty($this->enabledSites)) {
+            $sites = Craft::$app->getSites()->getAllSites();
+            $this->enabledSites = array_map(fn($site) => $site->id, $sites);
+        }
+    }
+
     public function rules(): array
     {
         return [

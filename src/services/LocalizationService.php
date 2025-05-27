@@ -11,6 +11,8 @@ use esign\craftmultisitelanguageredirect\Plugin;
 
 class LocalizationService extends Component
 {
+    private ?array $_enabledSites = null;
+
     /**
      * Checks if the current URL is already a translated route for the current site
      */
@@ -67,10 +69,30 @@ class LocalizationService extends Component
      */
     private function getSitesMatchingHost(string $hostInfo): array
     {
+        $enabledSites = $this->getEnabledSites();
+
+
         return array_values(array_filter(
             Craft::$app->getSites()->allSites,
-            fn($site) => $this->siteMatchesHost($site, $hostInfo)
+            function($site) use ($hostInfo, $enabledSites) {
+                // Only include sites that are enabled for redirection
+                if (!empty($enabledSites) && !in_array($site->id, $enabledSites)) {
+                    return false;
+                }
+                return $this->siteMatchesHost($site, $hostInfo);
+            }
         ));
+    }
+
+    /**
+     * Gets the enabled sites from settings
+     */
+    private function getEnabledSites(): array
+    {
+        if ($this->_enabledSites === null) {
+            $this->_enabledSites = Plugin::getInstance()->getSettings()->enabledSites;
+        }
+        return $this->_enabledSites;
     }
 
     /**
@@ -101,7 +123,11 @@ class LocalizationService extends Component
     public function getSitesInCurrentGroup(): array
     {
         $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
-        return Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
+        $enabledSites = $this->getEnabledSites();
+
+        $sites = Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
+
+        return array_values(array_filter($sites, fn($site) => in_array($site->id, $enabledSites)));
     }
 
     /**
