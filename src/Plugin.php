@@ -12,7 +12,7 @@ use esign\craftmultisitelanguageredirect\services\LocalizationService;
 use yii\base\Event;
 
 /**
- * MultiSite Language Redirect plugin
+ * Multi Site Language Redirect plugin
  *
  * @property-read LocalizationService $localizationService
  * @method static Plugin getInstance()
@@ -44,8 +44,8 @@ class Plugin extends BasePlugin
         }
 
         if (Craft::$app->getRequest()->getIsSiteRequest()) {
-            // if route is robots.txt don't check cookie
-            if (Craft::$app->getRequest()->getUrl() === '/robots.txt') {
+            // Check if route is excluded from redirection
+            if ($this->localizationService->isRouteExcluded()) {
                 $this->localizationService->setSite(false);
             } else {
                 $this->localizationService->setSite();
@@ -69,10 +69,11 @@ class Plugin extends BasePlugin
                     return;
                 }
         
-                if ($request->getUrl() === '/robots.txt') {
+                // Check if route is excluded from redirection
+                if ($this->localizationService->isRouteExcluded()) {
                     return;
                 }
-        
+
                 // Skip if request method is in the ignored methods list
                 if (in_array($request->getMethod(), $this->getSettings()->httpMethodsIgnored)) {
                     return;
@@ -133,6 +134,7 @@ class Plugin extends BasePlugin
         return Craft::$app->view->renderTemplate('multi-site-language-redirect/_settings.twig', [
             'plugin' => $this,
             'settings' => $this->getSettings(),
+            'config' => Craft::$app->getConfig()->getConfigFromFile('multi-site-language-redirect'),
         ]);
     }
 }

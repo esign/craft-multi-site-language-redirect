@@ -23,7 +23,7 @@ return [
         // With this setting you can ignore certain HTTP methods from being redirected.
         // 'httpMethodsIgnored' => [
         //     'POST',
-        //     'PUT', 
+        //     'PUT',
         //     'PATCH',
         //     'DELETE'
         // ],
@@ -44,5 +44,35 @@ return [
         //         '{{siteId}}',
         //     ],
         // ],
+
+        // With this setting you can exclude routes globally from language redirection.
+        // Supports wildcard matching with * (e.g., '/api/*' excludes all API routes).
+        // 'globalExcludedRoutes' => [
+        //     ['route' => '/robots.txt'],
+        //     ['route' => '/sitemap.xml'],
+        //     ['route' => '/api/*'],
+        //     ['route' => '/admin/*'],
+        // ],
+
+        // With this setting you can exclude routes per site group from language redirection.
+        // 'excludedRoutesByGroupId' => [
+        //     '{{siteGroupId}}' => [
+        //         ['route' => '/special-page'],
+        //         ['route' => '/group-specific/*'],
+        //     ],
+        // ],
+
+        // With this setting you can exclude routes globally from language redirection.
+        // 'globalExcludedRoutes' => [
+        //     'robots.txt',
+        // ],
+
+        // With this setting you can exclude routes per site group from language redirection.
+        // 'excludedRoutesByGroupId' => [
+        //     '{{siteGroupId}}' => [
+        //         ['route' => '/special-page'],
+        //         ['route' => '/group-specific/*'],
+        //     ],
+        // ],
     ],
-]; 
+];

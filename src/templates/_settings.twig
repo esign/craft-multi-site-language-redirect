@@ -1,33 +1,36 @@
 {% import "_includes/forms" as forms %}
-
+{% from 'multi-site-language-redirect/_macros' import translation %}
+{% from 'multi-site-language-redirect/_macros' import configWarning %}
 
 <div class="multi-site-language-redirect-settings">
     <div class="field">
         {{ forms.lightswitchField({
             first: true,
-            label: "Enable Localization"|t('multi-site-language-redirect'),
-            instructions: "Enable automatic language detection and redirection"|t('multi-site-language-redirect'),
-            name: 'enabled',
+            label: "Enable Redirects"|t('multi-site-language-redirect'),
+            instructions: translation("Enable automatic language detection and redirection"),
+            name: 'settings[enabled]',
             on: settings.enabled,
             errors: settings.getErrors('enabled'),
+            warning: config.enabled is defined ? configWarning('enabled'),
         }) }}
     </div>
 
     <div class="field">
         {{ forms.textField({
             label: "Cookie Name"|t('multi-site-language-redirect'),
-            instructions: "The name of the cookie used to store the language preference"|t('multi-site-language-redirect'),
+            instructions: translation("The name of the cookie used to store the language preference"),
             name: 'cookieName',
             value: settings.cookieName,
             errors: settings.getErrors('cookieName'),
             required: true,
+            warning: config.cookieName is defined ? configWarning('cookieName'),
         }) }}
     </div>
 
     <div class="field">
         {{ forms.checkboxSelectField({
             label: "Ignored HTTP Methods"|t('multi-site-language-redirect'),
-            instructions: "HTTP methods that should not trigger a redirect"|t('multi-site-language-redirect'),
+            instructions: translation("HTTP methods that should not trigger a redirect"),
             name: 'httpMethodsIgnored',
             options: [
                 { label: 'POST', value: 'POST' },
@@ -37,18 +40,45 @@
             ],
             values: settings.httpMethodsIgnored,
             errors: settings.getErrors('httpMethodsIgnored'),
+            warning: config.httpMethodsIgnored is defined ? configWarning('httpMethodsIgnored'),
         }) }}
     </div>
 
     <hr>
 
-    <h2>Primary Sites & Redirection</h2>
+    <h2>{{ translation("Primary Sites & Redirection") }}</h2>
     <div class="info-box">
-        <p class="title">Primary Site:</p>
-        <p class="description">{{ "Select the primary site for each group. If no selection is made, the first site in the group will be used as default."|t('multi-site-language-redirect') }}</p>
+        <p class="title">{{ translation("Primary Site:") }}</p>
+        <p class="description">{{ translation("Select the primary site for each group. If no selection is made, the first site in the group will be used as default.") }}</p>
         
-        <p class="title">Disabled Sites for Redirection:</p>
-        <p class="description">{{ "Selected sites will be disabled for language redirection. Sites that are not selected will be available for automatic redirection. All sites remain accessible in the control panel."|t('multi-site-language-redirect') }}</p>
+        <p class="title">{{ translation("Disabled Sites for Redirection:") }}</p>
+        <p class="description">{{ translation("Selected sites will be disabled for language redirection. Sites that are not selected will be available for automatic redirection. All sites remain accessible in the control panel.") }}</p>
+        
+        <p class="title">{{ translation("Site Group Excluded Routes:") }}</p>
+        <p class="description">{{ translation("Routes that should be excluded from redirection for this specific site group only.") }}</p>
+    </div>
+
+    <div class="field">
+        {{ forms.editableTableField({
+            label: translation("Global Excluded Routes"),
+            instructions: translation("Add routes that should be excluded from redirection globally. Routes should start with / (e.g., /robots.txt, /api/*, /sitemap.xml)"),
+            name: 'globalExcludedRoutes',
+            cols: {
+                route: {
+                    heading: translation("Route"),
+                    type: 'singleline',
+                    placeholder: translation("/special-page"),
+                    required: true
+                }
+            },
+            rows: settings.globalExcludedRoutes ?? [],
+            errors: settings.getErrors('globalExcludedRoutes'),
+            addRowLabel: translation("Add Route"),
+            allowAdd: true,
+            allowDelete: true,
+            allowReorder: true,
+            warning: config.globalExcludedRoutes is defined ? configWarning('globalExcludedRoutes'),
+        }) }}
     </div>
 
     {% set siteGroups = craft.app.sites.getAllGroups() %}
@@ -56,11 +86,11 @@
         {% for group in siteGroups %}
             {% set sites = craft.app.sites.getSitesByGroupId(group.id)|filter(site => site.enabled) %}
             <div class="site-group-card">
-                <h3>{{ group.name|t('multi-site-language-redirect') }}</h3>
+                <h3>{{ group.name }}</h3>
                 <div class="flex">
                     <div>
                         {{ forms.selectField({
-                            label: "Primary Site",
+                            label: translation("Primary Site"),
                             name: 'primarySites[' ~ group.id ~ ']',
                             options: sites|map(site => {
                                 label: site.name,
@@ -68,11 +98,12 @@
                             }),
                             value: settings.primarySites[group.id] ?? sites[0].id,
                             errors: settings.getErrors('primarySites'),
+                            warning: config.primarySites is defined ? configWarning('primarySites'),
                         }) }}
                     </div>
                     <div>
                         {{ forms.checkboxSelectField({
-                            label: "Disabled Sites for Redirection",
+                            label: translation("Disabled Sites for Redirection"),
                             name: 'disabledSitesByGroupId[' ~ group.id ~ ']',
                             options: sites|map(site => {
                                 label: site.name,
@@ -80,8 +111,31 @@
                             }),
                             values: settings.disabledSitesByGroupId[group.id] ?? false,
                             errors: settings.getErrors('disabledSitesByGroupId'),
+                            warning: config.disabledSitesByGroupId is defined ? configWarning('disabledSitesByGroupId'),
                         }) }}
                     </div>
+                </div>
+                
+                <div class="field">
+                    {{ forms.editableTableField({
+                        label: translation("Excluded Routes for ") ~ group.name,
+                        name: 'excludedRoutesByGroupId[' ~ group.id ~ ']',
+                        cols: {
+                            route: {
+                                heading: translation("Route"),
+                                type: 'singleline',
+                                placeholder: translation("/special-page"),
+                                required: true
+                            }
+                        },
+                        rows: settings.excludedRoutesByGroupId[group.id] ?? [],
+                        errors: settings.getErrors('excludedRoutesByGroupId'),
+                        addRowLabel: translation("Add Route"),
+                        allowAdd: true,
+                        allowDelete: true,
+                        allowReorder: true,
+                        warning: config.excludedRoutesByGroupId is defined ? configWarning('excludedRoutesByGroupId'),
+                    }) }}
                 </div>
             </div>
         {% endfor %}

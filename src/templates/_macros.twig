@@ -1,0 +1,7 @@
+{% macro translation(text) -%}
+    {{ text|t('multi-site-language-redirect') }}
+{%- endmacro %}
+
+{% macro configWarning(setting) -%}
+    {{ 'This is being overridden by the `{setting}` config setting.'|t('multi-site-language-redirect', {setting: setting })|markdown(inlineOnly=true) }}
+{%- endmacro %}

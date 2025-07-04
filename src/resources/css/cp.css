@@ -28,6 +28,42 @@
     color: #596673;
 }
 
+/* Editable Table Styles */
+.multi-site-language-redirect-settings .editable-table {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.multi-site-language-redirect-settings .editable-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.multi-site-language-redirect-settings .editable-table th,
+.multi-site-language-redirect-settings .editable-table td {
+    padding: 0.5em;
+    border: 1px solid #e3e5e8;
+    text-align: left;
+}
+
+.multi-site-language-redirect-settings .editable-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+
+.multi-site-language-redirect-settings .editable-table input[type="text"] {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0.25em;
+}
+
+.multi-site-language-redirect-settings .editable-table .add {
+    margin-top: 0.5em;
+}
+
 .multi-site-language-redirect-settings .site-groups {
     /* Container for site groups */
 }
@@ -48,7 +84,6 @@
     display: flex;
     align-items: flex-start;
     gap: 2em;
-    flex-wrap: wrap;
 }
 
 .multi-site-language-redirect-settings .site-group-card .flex > div:first-child {
@@ -59,4 +94,11 @@
 .multi-site-language-redirect-settings .site-group-card .flex > div:last-child {
     flex: 2;
     min-width: 220px;
+}
+
+/* Ensure editable tables in site group cards are visible */
+.multi-site-language-redirect-settings .site-group-card .editable-table {
+    margin-top: 1em;
+    display: block !important;
+    visibility: visible !important;
 } 

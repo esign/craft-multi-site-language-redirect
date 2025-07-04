@@ -4,7 +4,6 @@ namespace esign\craftmultisitelanguageredirect\services;
 
 use Craft;
 use craft\base\Component;
-use craft\helpers\ArrayHelper;
 use craft\helpers\StringHelper;
 use craft\models\Site;
 use craft\validators\LanguageValidator;
@@ -226,5 +225,80 @@ class LocalizationService extends Component
             }
         }
         return null;
+    }
+
+    /**
+     * Checks if the current route should be excluded from redirection
+     */
+    public function isRouteExcluded(?string $route = null): bool
+    {
+        if ($route === null) {
+            $route = Craft::$app->getRequest()->getUrl();
+        }
+
+        $excludedRoutes = $this->getExcludedRoutes();
+        
+        foreach ($excludedRoutes as $excludedRoute) {
+            if ($this->matchesRoute($route, $excludedRoute)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets all excluded routes for the current site group combined with global excluded routes
+     */
+    public function getExcludedRoutes(): array
+    {
+        $settings = Plugin::getInstance()->getSettings();
+        $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
+        
+        $excludedRoutes = [];
+        
+        // Add global excluded routes
+        if (!empty($settings->globalExcludedRoutes)) {
+            foreach ($settings->globalExcludedRoutes as $routeData) {
+                if (isset($routeData['route']) && !empty(trim($routeData['route']))) {
+                    $excludedRoutes[] = trim($routeData['route']);
+                }
+            }
+        }
+        
+        // Add site group specific excluded routes
+        if (!empty($settings->excludedRoutesByGroupId[$currentGroupId])) {
+            foreach ($settings->excludedRoutesByGroupId[$currentGroupId] as $routeData) {
+                if (isset($routeData['route']) && !empty(trim($routeData['route']))) {
+                    $excludedRoutes[] = trim($routeData['route']);
+                }
+            }
+        }
+        
+        return array_unique($excludedRoutes);
+    }
+
+    /**
+     * Checks if a route matches an excluded route pattern
+     */
+    private function matchesRoute(string $route, string $pattern): bool
+    {
+        // Normalize routes by removing trailing slashes and ensuring leading slash
+        $route = '/' . trim($route, '/');
+        $pattern = '/' . trim($pattern, '/');
+        
+        // Handle root route
+        if ($pattern === '/') {
+            return $route === '/';
+        }
+        
+        // Support wildcard matching with *
+        if (str_contains($pattern, '*')) {
+            $regexPattern = str_replace(['/', '*'], ['\/', '.*'], $pattern);
+            return preg_match('/^' . $regexPattern . '$/', $route) === 1;
+        }
+        
+        // Exact match
+        return $route === $pattern;
     }
 }
