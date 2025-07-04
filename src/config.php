@@ -64,7 +64,8 @@ return [
 
         // With this setting you can exclude routes globally from language redirection.
         // 'globalExcludedRoutes' => [
-        //     'robots.txt',
+        //     ['route' => '/robots.txt'],
+        //     ['route' => '/api/*'],
         // ],
 
         // With this setting you can exclude routes per site group from language redirection.

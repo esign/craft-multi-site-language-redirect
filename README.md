@@ -44,6 +44,7 @@ Routes that should be excluded only for specific site groups. This allows for mo
 #### Wildcard Support
 Both global and site group specific exclusions support wildcard matching using `*`:
 - `/api/*` - Excludes all routes starting with `/api/`
+- `/admin/*` - Excludes all admin routes
 - `/special-*` - Excludes routes like `/special-page`, `/special-content`, etc.
 
 #### Configuration via Settings
@@ -66,6 +67,43 @@ return [
                 ['route' => '/group-specific/*'],
             ],
         ],
+    ],
+];
+```
+
+### Config Override Detection
+
+The plugin automatically detects when settings are being overridden by a config file and displays appropriate warnings in the settings interface. When a setting is overridden by a config file:
+
+- The form field will show a warning message indicating which config setting is overriding it
+- The field will be disabled to prevent conflicts between the config file and database settings
+- The warning message will clearly indicate which config file setting is responsible
+
+This helps prevent confusion and ensures that users understand when their settings are being controlled by environment-specific configuration files rather than the database.
+
+#### Example Config File
+Copy the `src/config.php` file to your Craft project's `config/` directory as `multi-site-language-redirect.php` and modify the settings as needed:
+
+```php
+return [
+    '*' => [
+        'enabled' => true,
+        'cookieName' => 'my_custom_language_cookie',
+        'httpMethodsIgnored' => [
+            'POST',
+            'PUT',
+            'PATCH',
+            'DELETE',
+            'OPTIONS',
+        ],
+        'globalExcludedRoutes' => [
+            ['route' => '/robots.txt'],
+            ['route' => '/sitemap.xml'],
+            ['route' => '/api/*'],
+        ],
+    ],
+    'dev' => [
+        'enabled' => false, // Disable in development
     ],
 ];
 ```

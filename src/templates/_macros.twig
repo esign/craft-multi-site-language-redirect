@@ -1,7 +1,9 @@
-{% macro translation(text) -%}
-    {{ text|t('multi-site-language-redirect') }}
-{%- endmacro %}
+{% macro translation(key) %}
+    {{ key|t('multi-site-language-redirect') }}
+{% endmacro %}
 
-{% macro configWarning(setting) -%}
-    {{ 'This is being overridden by the `{setting}` config setting.'|t('multi-site-language-redirect', {setting: setting })|markdown(inlineOnly=true) }}
-{%- endmacro %}
+{% macro configWarning(setting) %}
+    {{ "This setting is being overridden by the {setting} config setting in your multi-site-language-redirect.php config file."|t('multi-site-language-redirect', {
+        setting: setting
+    }) }}
+{% endmacro %}

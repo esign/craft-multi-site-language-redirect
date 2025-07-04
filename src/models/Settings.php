@@ -32,7 +32,7 @@ class Settings extends Model
 
     /** @var array */
     public array $globalExcludedRoutes = [
-        'robots.txt',
+        ['route' => '/robots.txt'],
     ];
 
     /** @var array */

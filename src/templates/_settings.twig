@@ -8,7 +8,7 @@
             first: true,
             label: "Enable Redirects"|t('multi-site-language-redirect'),
             instructions: translation("Enable automatic language detection and redirection"),
-            name: 'settings[enabled]',
+            name: 'enabled',
             on: settings.enabled,
             errors: settings.getErrors('enabled'),
             warning: config.enabled is defined ? configWarning('enabled'),
