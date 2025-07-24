@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace esign\craftmultisitelanguageredirect;
 
 use Craft;
@@ -9,12 +11,12 @@ use craft\web\Application;
 use esign\craftmultisitelanguageredirect\assets\SettingsAsset;
 use esign\craftmultisitelanguageredirect\models\Settings;
 use esign\craftmultisitelanguageredirect\services\LocalizationService;
+use esign\craftmultisitelanguageredirect\services\RedirectService;
 use yii\base\Event;
 
 /**
  * Multi Site Language Redirect plugin
  *
- * @property-read LocalizationService $localizationService
  * @method static Plugin getInstance()
  * @method Settings getSettings()
  * @author dieter.vanhove@outlook.com <support.web@dynamate.be>
@@ -30,7 +32,8 @@ class Plugin extends BasePlugin
     {
         return [
             'components' => [
-                'localizationService' => LocalizationService::class,
+                'localization' => LocalizationService::class,
+                'redirect' => RedirectService::class,
             ],
         ];
     }
@@ -45,10 +48,10 @@ class Plugin extends BasePlugin
 
         if (Craft::$app->getRequest()->getIsSiteRequest()) {
             // Check if route is excluded from redirection
-            if ($this->localizationService->isRouteExcluded()) {
-                $this->localizationService->setSite(false);
+            if ($this->getLocalization()->isRouteExcluded()) {
+                $this->getLocalization()->setSite(false);
             } else {
-                $this->localizationService->setSite();
+                $this->getLocalization()->setSite();
             }
         }
 
@@ -63,62 +66,18 @@ class Plugin extends BasePlugin
         Event::on(
             Application::class,
             Application::EVENT_BEFORE_REQUEST,
-            function(Event $event) {
-                $request = Craft::$app->getRequest();
-                if (!$request->isSiteRequest) {
-                    return;
-                }
-        
-                // Check if route is excluded from redirection
-                if ($this->localizationService->isRouteExcluded()) {
-                    return;
-                }
-
-                // Skip if request method is in the ignored methods list
-                if (in_array($request->getMethod(), $this->getSettings()->httpMethodsIgnored)) {
-                    return;
-                }
-        
-                $localizationService = $this->localizationService;
-        
-                // Skip if already a translated route
-                if ($localizationService->isTranslatedRoute()) {
-                    $localizationService->setLanguageCookie(Craft::$app->getSites()->getCurrentSite()->language);
-                    return;
-                }
-        
-                $language = $request->getSegment(1);
-                
-                // Skip if language is valid but not supported
-                if ($localizationService->isValidLanguageCode($language)) {
-                    return;
-                }
-        
-                // Skip if language is supported
-                if (in_array($language, $localizationService->getSupportedLanguages())) {
-                    // Set the language cookie when a supported language is selected
-                    $localizationService->setLanguageCookie($language);
-                    return;
-                }
-        
-                // Redirect to the preferred language site
-                $localizationService = $this->localizationService;
-                $preferredLanguage = $localizationService->getPreferredLanguage();
-                $sites = $localizationService->getEnabledSites();
-        
-                // Find the site matching the preferred language
-                $targetSite = current(array_filter($sites, function($site) use ($preferredLanguage) {
-                    return $site->language === $preferredLanguage;
-                }));
-        
-                if ($targetSite) {
-                    // Set the language cookie before redirecting
-                    $localizationService->setLanguageCookie($preferredLanguage);
-                    Craft::$app->getResponse()->redirect($targetSite->baseUrl . Craft::$app->getRequest()->pathInfo, 302);
-                    Craft::$app->end();
-                }
-            }
+            [$this->getRedirect(), 'redirect']
         );
+    }
+
+    public function getRedirect(): RedirectService
+    {
+        return $this->get('redirect');
+    }
+
+    public function getLocalization(): LocalizationService
+    {
+        return $this->get('localization');
     }
 
     protected function createSettingsModel(): ?Model
@@ -126,7 +85,7 @@ class Plugin extends BasePlugin
         return Craft::createObject(Settings::class);
     }
 
-    protected function settingsHtml(): ?string
+    protected function settingsHtml(): string
     {
         // Register the asset bundle for the settings page
         Craft::$app->getView()->registerAssetBundle(SettingsAsset::class);

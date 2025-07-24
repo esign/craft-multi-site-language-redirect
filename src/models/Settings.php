@@ -5,37 +5,22 @@ namespace esign\craftmultisitelanguageredirect\models;
 use Craft;
 use craft\base\Model;
 
-/**
- * @property bool $enabled
- * @property array $httpMethodsIgnored
- * @property string $cookieName
- * @property array $primarySites
- * @property array $globalExcludedRoutes
- * @property array $excludedRoutesByGroupId
- */
 class Settings extends Model
 {
-    /** @var bool */
     public bool $enabled = false;
 
-    /** @var array */
     public array $httpMethodsIgnored = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-    /** @var string */
     public string $cookieName = 'language';
 
-    /** @var array */
     public array $primarySites = [];
 
-    /** @var array */
     public ?array $disabledSitesByGroupId = null;
 
-    /** @var array */
     public array $globalExcludedRoutes = [
         ['route' => '/robots.txt'],
     ];
 
-    /** @var array */
     public array $excludedRoutesByGroupId = [];
 
     public function init(): void
@@ -58,7 +43,7 @@ class Settings extends Model
         ];
     }
 
-    public function validateRoutes($attribute, $params): void
+    public function validateRoutes(string $attribute, array $params): void
     {
         if (!is_array($this->$attribute)) {
             return;
@@ -77,7 +62,7 @@ class Settings extends Model
         }
     }
 
-    public function validateGroupRoutes($attribute, $params): void
+    public function validateGroupRoutes(string $attribute, array $params): void
     {
         if (!is_array($this->$attribute)) {
             return;

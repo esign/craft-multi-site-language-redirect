@@ -8,10 +8,13 @@ use craft\helpers\StringHelper;
 use craft\models\Site;
 use craft\validators\LanguageValidator;
 use esign\craftmultisitelanguageredirect\Plugin;
+use yii\web\Cookie;
 
 class LocalizationService extends Component
 {
     private ?array $_enabledSites = null;
+    private ?array $_excludedRoutes = null;
+    private ?array $_supportedLanguages = null;
 
     /**
      * Checks if the current URL is already a translated route for the current site
@@ -28,7 +31,7 @@ class LocalizationService extends Component
     /**
      * Sets the appropriate site based on the current URL and primary site settings
      */
-    public function setSite($checkCookie = true): void
+    public function setSite(bool $checkCookie = true): void
     {
         if ($this->isTranslatedRoute()) {
             return;
@@ -66,6 +69,8 @@ class LocalizationService extends Component
 
     /**
      * Gets all sites that match the given host
+     *
+     * @return Site[]
      */
     private function getSitesMatchingHost(string $hostInfo): array
     {
@@ -83,9 +88,9 @@ class LocalizationService extends Component
 
         return array_values(array_filter(
             Craft::$app->getSites()->allSites,
-            function($site) use ($hostInfo, $disabledSitesIds) {
+            function(Site $site) use ($hostInfo, $disabledSitesIds): bool {
                 // Only include sites that are enabled for redirection (not in disabled list)
-                if (!empty($disabledSitesIds) && in_array($site->id, $disabledSitesIds)) {
+                if (!empty($disabledSitesIds) && in_array($site->id, $disabledSitesIds, true)) {
                     return false;
                 }
                 return $this->siteMatchesHost($site, $hostInfo);
@@ -95,18 +100,20 @@ class LocalizationService extends Component
 
     /**
      * Gets the enabled sites from settings
+     *
+     * @return Site[]
      */
     public function getEnabledSites(): array
     {
         if ($this->_enabledSites === null) {
             $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
-            $disabledSites = Plugin::getInstance()->getSettings()->disabledSitesByGroupId[$currentGroupId];
+            $disabledSites = Plugin::getInstance()->getSettings()->disabledSitesByGroupId[$currentGroupId] ?? [];
             $sites = Craft::$app->getSites()->getSitesByGroupId($currentGroupId);
 
             if (empty($disabledSites)) {
                 $this->_enabledSites = $sites;
             } else {
-                $this->_enabledSites = array_values(array_filter($sites, fn($site) => !in_array($site->id, $disabledSites)));
+                $this->_enabledSites = array_values(array_filter($sites, fn(Site $site) => !in_array($site->id, $disabledSites, true)));
             }
         }
 
@@ -116,7 +123,7 @@ class LocalizationService extends Component
     /**
      * Checks if a site's base URL matches the given host
      */
-    private function siteMatchesHost($site, string $hostInfo): bool
+    private function siteMatchesHost(Site $site, string $hostInfo): bool
     {
         return StringHelper::startsWith($site->baseUrl, $hostInfo);
     }
@@ -137,13 +144,19 @@ class LocalizationService extends Component
 
     /**
      * Gets all supported languages from sites in the current group
+     *
+     * @return string[]
      */
     public function getSupportedLanguages(): array
     {
-        return array_map(
-            fn($site) => $site->language,
-            $this->getEnabledSites()
-        );
+        if ($this->_supportedLanguages === null) {
+            $this->_supportedLanguages = array_map(
+                fn(Site $site) => $site->language,
+                $this->getEnabledSites()
+            );
+        }
+
+        return $this->_supportedLanguages;
     }
 
     /**
@@ -153,7 +166,7 @@ class LocalizationService extends Component
     {
         // Try to get language from cookie first
         $cookieLanguage = $this->getLanguageFromCookie();
-        if ($cookieLanguage && in_array($cookieLanguage, $this->getSupportedLanguages())) {
+        if ($cookieLanguage && in_array($cookieLanguage, $this->getSupportedLanguages(), true)) {
             return $cookieLanguage;
         }
 
@@ -161,7 +174,7 @@ class LocalizationService extends Component
         $primaryLanguage = Craft::$app->getSites()->getCurrentSite()->language;
 
         // Ensure primary language is first in the list
-        if (in_array($primaryLanguage, $supportedLanguages)) {
+        if (in_array($primaryLanguage, $supportedLanguages, true)) {
             $supportedLanguages = array_merge(
                 [$primaryLanguage],
                 array_diff($supportedLanguages, [$primaryLanguage])
@@ -201,14 +214,14 @@ class LocalizationService extends Component
     public function setLanguageCookie(string $language): void
     {
         $cookieName = Plugin::getInstance()->getSettings()->cookieName;
-        $cookie = new \yii\web\Cookie([
+        $cookie = new Cookie([
             'name' => $cookieName,
             'value' => $language,
             'expire' => time() + 31536000, // 1 year
             'path' => '/',
             'secure' => Craft::$app->getRequest()->getIsSecureConnection(),
             'httpOnly' => true,
-            'sameSite' => \yii\web\Cookie::SAME_SITE_LAX,
+            'sameSite' => Cookie::SAME_SITE_LAX,
         ]);
 
         Craft::$app->getResponse()->getCookies()->add($cookie);
@@ -249,33 +262,39 @@ class LocalizationService extends Component
 
     /**
      * Gets all excluded routes for the current site group combined with global excluded routes
+     *
+     * @return string[]
      */
     public function getExcludedRoutes(): array
     {
-        $settings = Plugin::getInstance()->getSettings();
-        $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
-        
-        $excludedRoutes = [];
-        
-        // Add global excluded routes
-        if (!empty($settings->globalExcludedRoutes)) {
-            foreach ($settings->globalExcludedRoutes as $routeData) {
-                if (isset($routeData['route']) && !empty(trim($routeData['route']))) {
-                    $excludedRoutes[] = trim($routeData['route']);
+        if ($this->_excludedRoutes === null) {
+            $settings = Plugin::getInstance()->getSettings();
+            $currentGroupId = Craft::$app->getSites()->getCurrentSite()->groupId;
+            
+            $excludedRoutes = [];
+            
+            // Add global excluded routes
+            if (!empty($settings->globalExcludedRoutes)) {
+                foreach ($settings->globalExcludedRoutes as $routeData) {
+                    if (isset($routeData['route']) && !empty(trim($routeData['route']))) {
+                        $excludedRoutes[] = trim($routeData['route']);
+                    }
                 }
             }
-        }
-        
-        // Add site group specific excluded routes
-        if (!empty($settings->excludedRoutesByGroupId[$currentGroupId])) {
-            foreach ($settings->excludedRoutesByGroupId[$currentGroupId] as $routeData) {
-                if (isset($routeData['route']) && !empty(trim($routeData['route']))) {
-                    $excludedRoutes[] = trim($routeData['route']);
+            
+            // Add site group specific excluded routes
+            if (!empty($settings->excludedRoutesByGroupId[$currentGroupId])) {
+                foreach ($settings->excludedRoutesByGroupId[$currentGroupId] as $routeData) {
+                    if (isset($routeData['route']) && !empty(trim($routeData['route']))) {
+                        $excludedRoutes[] = trim($routeData['route']);
+                    }
                 }
             }
+            
+            $this->_excludedRoutes = array_unique($excludedRoutes);
         }
-        
-        return array_unique($excludedRoutes);
+
+        return $this->_excludedRoutes;
     }
 
     /**

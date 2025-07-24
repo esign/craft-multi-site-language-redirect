@@ -1,7 +1,6 @@
 <?php
 
-
- /**
+/**
  * Multi Site Language Redirect config.php
  *
  * This file exists only as a template for the Multi Site Language Redirect settings.
@@ -35,7 +34,6 @@ return [
         // 'primarySites' => [
         //     '{{siteGroupId}}' => '{{siteId}}',
         // ],
-
 
         // With this setting you can set the sites that are enabled for each group.
         // 'disabledSitesByGroupId' => [
