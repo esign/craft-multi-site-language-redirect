@@ -43,7 +43,7 @@ class Settings extends Model
         ];
     }
 
-    public function validateRoutes(string $attribute, array $params): void
+    public function validateRoutes($attribute, $params): void
     {
         if (!is_array($this->$attribute)) {
             return;
@@ -62,7 +62,7 @@ class Settings extends Model
         }
     }
 
-    public function validateGroupRoutes(string $attribute, array $params): void
+    public function validateGroupRoutes($attribute, $params): void
     {
         if (!is_array($this->$attribute)) {
             return;
