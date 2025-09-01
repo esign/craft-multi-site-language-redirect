@@ -47,9 +47,7 @@ return [
         // Supports wildcard matching with * (e.g., '/api/*' excludes all API routes).
         // 'globalExcludedRoutes' => [
         //     ['route' => '/robots.txt'],
-        //     ['route' => '/sitemap.xml'],
         //     ['route' => '/api/*'],
-        //     ['route' => '/admin/*'],
         // ],
 
         // With this setting you can exclude routes per site group from language redirection.
